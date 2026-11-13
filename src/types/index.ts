@@ -1,0 +1,294 @@
+// API Response Envelopes
+export interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T;
+  meta: PaginationMeta | null;
+  errors?: ApiValidationError[];
+}
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface ApiValidationError {
+  field: string;
+  message: string;
+}
+
+// User / Admin / Auth Types
+export interface AdminUser {
+  id: number;
+  uuid: string;
+  name: string;
+  email: string;
+  is_super_admin: boolean;
+  roles: string[];
+  permissions: string[];
+  status?: 'active' | 'inactive' | 'suspended';
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AuthSession {
+  admin: AdminUser;
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface Role {
+  id: number;
+  name: string;
+  display_name: string;
+  description: string | null;
+  is_system: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Permission {
+  id: number;
+  slug: string;
+  name: string;
+  description: string | null;
+  category: string;
+  created_at: string;
+}
+
+// Catalog Types
+export interface ProductCategory {
+  id: number;
+  slug: string;
+  name: string;
+  description: string | null;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductFile {
+  id: number;
+  uuid: string;
+  product_id: number;
+  original_name: string;
+  storage_path: string;
+  file_size: number;
+  mime_type: string;
+  file_extension: string;
+  storage_driver: string;
+  checksum_sha256: string;
+  version: number;
+  is_current: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Product {
+  id: number;
+  uuid: string;
+  category_id: number;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  status: 'active' | 'inactive' | 'archived';
+  thumbnail_url: string | null;
+  product_type: 'pdf' | 'ebook' | 'software' | 'audio' | 'video' | 'archive' | 'other';
+  created_by_admin_id?: number;
+  created_at: string;
+  updated_at: string;
+  category_name?: string;
+  file?: ProductFile | null;
+}
+
+// Structured Visual Meta for Sales Page (parsed from description if JSON)
+export interface ProductVisualMeta {
+  summary: string;
+  edition?: string;
+  highlight_badge?: string;
+  indicators?: Array<{ label: string; value: string }>;
+  features?: Array<{ title: string; category: string; description: string; image: string }>;
+  bonus?: { title: string; description: string; image: string; badge?: string } | null;
+  how_to_use?: Array<{ step: number; title: string; desc: string }>;
+}
+
+// Order & Checkout Types
+export interface CheckoutInput {
+  customer: {
+    name: string;
+    email: string;
+  };
+  items: Array<{
+    product_id: number;
+    quantity: number;
+  }>;
+  payment_method: 'simulated' | 'pix' | 'credit_card' | 'bank_slip';
+  gateway?: string;
+}
+
+export interface OrderItem {
+  id: number;
+  order_id: number;
+  product_id: number;
+  product_name_snapshot: string;
+  product_price_snapshot: number;
+  product_type_snapshot: string;
+  quantity: number;
+  subtotal: number;
+  created_at: string;
+}
+
+export interface Order {
+  id: number;
+  uuid: string;
+  customer_id: number;
+  total_amount: number;
+  currency: string;
+  status: 'pending' | 'paid' | 'failed' | 'canceled' | 'refunded';
+  payment_status: 'pending' | 'confirmed' | 'failed' | 'refunded';
+  gateway_used: string | null;
+  external_transaction_id: string | null;
+  paid_at: string | null;
+  created_at: string;
+  updated_at: string;
+  customer?: {
+    id?: number;
+    name: string;
+    email: string;
+  } | null;
+  items?: OrderItem[];
+  payment?: {
+    id: number;
+    gateway_name: string;
+    gateway_transaction_id: string;
+    amount: number;
+    currency: string;
+    payment_method: string;
+    status: string;
+    payment_url: string | null;
+    qr_code_pix: string | null;
+  } | null;
+}
+
+export interface CheckoutResult {
+  order: Order;
+  payment: {
+    gatewayName: string;
+    transactionId: string;
+    paymentUrl: string | null;
+    qrCodePix: string | null;
+    status: 'pending' | 'confirmed';
+  };
+}
+
+export interface PublicOrder {
+  uuid: string;
+  status: 'pending' | 'paid' | 'failed' | 'canceled' | 'refunded';
+  payment_status: 'pending' | 'confirmed' | 'failed' | 'refunded';
+  total_amount: number;
+  currency: string;
+  paid_at: string | null;
+  created_at: string;
+  customer: {
+    name: string;
+    email: string;
+  } | null;
+  items: Array<{
+    product_name: string;
+    quantity: number;
+    subtotal: number;
+  }>;
+}
+
+// Deliveries
+export interface DigitalDelivery {
+  id: number;
+  delivery_identifier: string;
+  order_id: number;
+  customer_id: number;
+  product_id: number;
+  recipient_email: string;
+  status: 'pending' | 'processing' | 'sent' | 'failed';
+  attempts_count: number;
+  download_token: string;
+  download_token_expires_at: string;
+  download_count: number;
+  sent_at: string | null;
+  last_attempt_at: string | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+  product_name?: string;
+  customer_name?: string;
+  order_uuid?: string;
+}
+
+// Dashboard
+export interface DashboardData {
+  financial: {
+    totalRevenue: number;
+    currency: string;
+  };
+  orders: {
+    totalOrders: number;
+    pendingOrders: number;
+    paidOrders: number;
+    failedOrders: number;
+    refundedOrders: number;
+  };
+  deliveries: {
+    totalDeliveries: number;
+    sent: number;
+    failed: number;
+    pending: number;
+  };
+  catalog: {
+    totalProducts: number;
+    totalCustomers: number;
+  };
+  topProducts: Array<{
+    id: number;
+    name: string;
+    total_sold: number;
+    revenue: number;
+  }>;
+  salesByPeriod: Array<{
+    day: string;
+    orders_count: number;
+    total_revenue: number;
+  }>;
+}
+
+// Settings
+export interface SystemSetting {
+  id: number;
+  key: string;
+  value: string;
+  description: string | null;
+  category: 'general' | 'payment' | 'email' | 'storage' | 'security';
+  is_secret: number;
+  updated_by_admin_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Audit Logs
+export interface AuditLog {
+  id: number;
+  administrator_id: number | null;
+  administrator_name?: string;
+  administrator_email?: string;
+  action: string;
+  entity: string;
+  entity_id: string | null;
+  old_values: string | null;
+  new_values: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+}

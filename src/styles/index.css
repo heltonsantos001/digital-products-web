@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Custom candy scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Glass & Glow utilities */
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+}
+
+.candy-button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 0 #d97706;
+}
+
+.candy-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #d97706;
+}
+
+.candy-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #d97706;
+}
+
+.candy-button-pink {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 0 #be123c;
+}
+
+.candy-button-pink:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #be123c;
+}
+
+.candy-button-pink:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #be123c;
+}
