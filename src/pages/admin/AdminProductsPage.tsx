@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { productService } from '../../services/product.service';
 import { categoryService } from '../../services/category.service';
@@ -24,6 +25,13 @@ import {
   Eye,
 } from 'lucide-react';
 
+const MIN_PRODUCT_PRICE = 10;
+
+const isValidProductPrice = (price: string): boolean => {
+  const value = Number(price);
+  return price.trim() !== '' && Number.isFinite(value) && value >= MIN_PRODUCT_PRICE;
+};
+
 export const AdminProductsPage: React.FC = () => {
   const { hasPermission } = useAuth();
   const canCreate = hasPermission('products.create');
@@ -37,7 +45,6 @@ export const AdminProductsPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>(undefined);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Modals state
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [uploadFileProduct, setUploadFileProduct] = useState<Product | null>(null);
@@ -45,7 +52,6 @@ export const AdminProductsPage: React.FC = () => {
   const [productFiles, setProductFiles] = useState<ProductFile[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
 
-  // Form states
   const [saving, setSaving] = useState(false);
 
   const fetchProducts = async () => {
@@ -109,8 +115,6 @@ export const AdminProductsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      
-      {/* Page Title & Action Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-brand-navy tracking-tight">
@@ -139,7 +143,6 @@ export const AdminProductsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Filter & Search Bar */}
       <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-soft flex flex-col md:flex-row items-center justify-between gap-4">
         <form onSubmit={handleSearchSubmit} className="flex-1 w-full flex items-center gap-2">
           <div className="relative flex-1">
@@ -177,7 +180,6 @@ export const AdminProductsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Products Table */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-soft overflow-hidden">
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center text-slate-400">
@@ -279,7 +281,6 @@ export const AdminProductsPage: React.FC = () => {
 
                       <td className="py-4 px-6 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Upload new file version */}
                           {canUpdate && (
                             <button
                               onClick={() => setUploadFileProduct(p)}
@@ -290,7 +291,6 @@ export const AdminProductsPage: React.FC = () => {
                             </button>
                           )}
 
-                          {/* Edit Product */}
                           {canUpdate && (
                             <button
                               onClick={() => setEditProduct(p)}
@@ -301,7 +301,6 @@ export const AdminProductsPage: React.FC = () => {
                             </button>
                           )}
 
-                          {/* Delete Product */}
                           {canDelete && (
                             <button
                               onClick={() => handleDelete(p.id)}
@@ -322,7 +321,6 @@ export const AdminProductsPage: React.FC = () => {
         )}
       </div>
 
-      {/* CREATE PRODUCT MODAL */}
       {createModalOpen && (
         <CreateProductModal
           categories={categories}
@@ -334,7 +332,6 @@ export const AdminProductsPage: React.FC = () => {
         />
       )}
 
-      {/* EDIT PRODUCT MODAL */}
       {editProduct && (
         <EditProductModal
           product={editProduct}
@@ -347,7 +344,6 @@ export const AdminProductsPage: React.FC = () => {
         />
       )}
 
-      {/* UPLOAD FILE MODAL */}
       {uploadFileProduct && (
         <UploadProductFileModal
           product={uploadFileProduct}
@@ -359,7 +355,6 @@ export const AdminProductsPage: React.FC = () => {
         />
       )}
 
-      {/* VERSION HISTORY MODAL */}
       {historyProduct && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-4 shadow-2xl">
@@ -422,12 +417,10 @@ export const AdminProductsPage: React.FC = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };
 
-// Create Product Modal Subcomponent
 const CreateProductModal: React.FC<{
   categories: ProductCategory[];
   onClose: () => void;
@@ -444,8 +437,16 @@ const CreateProductModal: React.FC<{
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const priceIsValid = isValidProductPrice(price);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isValidProductPrice(price)) {
+      setError('O preço mínimo permitido é R$ 10,00.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -508,12 +509,18 @@ const CreateProductModal: React.FC<{
               <label className="block mb-1">Preço (R$) *</label>
               <input
                 type="number"
+                min={MIN_PRODUCT_PRICE}
                 step="0.01"
                 required
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50"
               />
+              {price.trim() !== '' && !priceIsValid && (
+                <p className="mt-1 text-[10px] font-medium text-red-500">
+                  O preço mínimo permitido é R$ 10,00.
+                </p>
+              )}
             </div>
 
             <div>
@@ -608,8 +615,8 @@ const CreateProductModal: React.FC<{
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="candy-button px-6 py-2.5 rounded-xl bg-brand-yellow text-brand-navy font-black disabled:opacity-50"
+              disabled={loading || !priceIsValid}
+              className="candy-button px-6 py-2.5 rounded-xl bg-brand-yellow text-brand-navy font-black disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Cadastrando...' : 'Salvar Produto'}
             </button>
@@ -620,7 +627,6 @@ const CreateProductModal: React.FC<{
   );
 };
 
-// Edit Product Modal Subcomponent
 const EditProductModal: React.FC<{
   product: Product;
   categories: ProductCategory[];
@@ -637,8 +643,16 @@ const EditProductModal: React.FC<{
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const priceIsValid = isValidProductPrice(price);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isValidProductPrice(price)) {
+      setError('O preço mínimo permitido é R$ 10,00.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -697,12 +711,18 @@ const EditProductModal: React.FC<{
               <label className="block mb-1">Preço (R$)</label>
               <input
                 type="number"
+                min={MIN_PRODUCT_PRICE}
                 step="0.01"
                 required
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50"
               />
+              {price.trim() !== '' && !priceIsValid && (
+                <p className="mt-1 text-[10px] font-medium text-red-500">
+                  O preço mínimo permitido é R$ 10,00.
+                </p>
+              )}
             </div>
 
             <div>
@@ -790,18 +810,18 @@ const EditProductModal: React.FC<{
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="candy-button px-6 py-2.5 rounded-xl bg-brand-yellow text-brand-navy font-black disabled:opacity-50"
+              disabled={loading || !priceIsValid}
+              className="candy-button px-6 py-2.5 rounded-xl bg-brand-yellow text-brand-navy font-black disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Salvando...' : 'Salvar Alterações'}
             </button>
           </div>
         </form>
       </div>
-    </div>  );
+    </div>
+  );
 };
 
-// Upload Product File Modal Subcomponent
 const UploadProductFileModal: React.FC<{
   product: Product;
   onClose: () => void;
