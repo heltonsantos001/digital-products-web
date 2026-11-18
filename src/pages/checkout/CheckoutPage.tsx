@@ -63,6 +63,7 @@ function isValidCpfCnpj(value: string): boolean {
 
   return false;
 }
+
 const checkoutFormSchema = z.object({
   name: z.string().min(2, 'Informe seu nome completo'),
   email: z.string().email('Informe um e-mail válido para entrega do arquivo'),
@@ -194,37 +195,117 @@ export const CheckoutPage: React.FC = () => {
   const meta = parseProductMeta(product.description);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#EBF8FF] via-slate-50 to-white text-brand-navy py-8 sm:py-12">
+    <div className="min-h-screen bg-gradient-to-b from-[#EBF8FF] via-slate-50 to-white text-brand-navy py-6 sm:py-12">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Top Header */}
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-brand-ice-300/40">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8 pb-4 border-b border-brand-ice-300/40">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-sm font-extrabold text-brand-navy hover:text-brand-pink transition-colors"
+            className="inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold text-brand-navy hover:text-brand-pink transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4 shrink-0" />
             <span>Voltar para o material</span>
           </Link>
-          <div className="flex items-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
-            <Lock className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200 self-start sm:self-auto">
+            <Lock className="w-3.5 h-3.5 shrink-0" />
             <span>Checkout Seguro & Criptografado</span>
           </div>
         </div>
 
         {apiError && (
-          <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-bold flex items-center gap-3">
+          <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-bold flex items-center gap-3">
             <AlertCircle className="w-5 h-5 shrink-0 text-rose-600" />
             <span>{apiError}</span>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           
-          {/* Left Column: Form (lg:col-span-7) */}
-          <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-soft space-y-6">
+          {/* Order Summary Column: order-1 on mobile (appears BEFORE finalization), order-2 on desktop (lg) */}
+          <div className="order-1 lg:order-2 lg:col-span-5 bg-white rounded-3xl p-5 sm:p-8 border border-slate-100 shadow-soft space-y-5 sm:space-y-6">
+            <h3 className="text-sm sm:text-base font-black text-brand-navy tracking-tight flex items-center gap-2">
+              <Sparkles className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-brand-yellow shrink-0" />
+              <span>Resumo do Pedido</span>
+            </h3>
+
+            {/* Product Item Card */}
+            <div className="flex gap-3.5 sm:gap-4 p-3.5 sm:p-4 rounded-2xl bg-brand-ice-50 border border-brand-ice-200">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-slate-200 shrink-0 border border-white shadow-xs">
+                {product.thumbnail_url ? (
+                  <img
+                    src={getProductImageUrl(product.thumbnail_url)}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xs font-bold text-slate-400">
+                    PDF
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-[9px] sm:text-[10px] font-black uppercase text-brand-pink tracking-wider block">
+                  {product.category_name || 'Material Pedagógico'}
+                </span>
+                <h4 className="text-xs sm:text-sm font-black text-brand-navy leading-snug line-clamp-2 break-words mt-0.5">
+                  {product.name}
+                </h4>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-[11px] sm:text-xs font-bold text-slate-500">1x unidade</span>
+                  <span className="text-xs sm:text-sm font-black text-brand-navy">
+                    {formatCurrency(product.price)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* What is included bullet points */}
+            <div className="space-y-2 text-xs font-semibold text-slate-600 bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-100">
+              <div className="flex items-center gap-2 text-brand-navy font-bold">
+                <CheckCircle2 className="w-4 h-4 text-brand-green shrink-0" />
+                <span>Arquivo digital original em alta definição</span>
+              </div>
+              <div className="flex items-center gap-2 text-brand-navy font-bold">
+                <CheckCircle2 className="w-4 h-4 text-brand-green shrink-0" />
+                <span>Pronto para imprimir em impressora comum</span>
+              </div>
+              <div className="flex items-center gap-2 text-brand-navy font-bold">
+                <CheckCircle2 className="w-4 h-4 text-brand-green shrink-0" />
+                <span>Acesso vitalício ao material</span>
+              </div>
+            </div>
+
+            {/* Pricing Summary Breakdown */}
+            <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs sm:text-sm">
+              <div className="flex justify-between text-slate-600 font-semibold">
+                <span>Subtotal</span>
+                <span>{formatCurrency(product.price)}</span>
+              </div>
+              <div className="flex justify-between text-slate-600 font-semibold">
+                <span>Frete (Envio Digital)</span>
+                <span className="text-brand-green font-bold">GRÁTIS</span>
+              </div>
+              <div className="flex justify-between text-base sm:text-lg font-black text-brand-navy pt-2 border-t border-slate-100">
+                <span>Total a Pagar</span>
+                <span className="text-brand-navy">{formatCurrency(product.price)}</span>
+              </div>
+            </div>
+
+            {/* Security Guarantee */}
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80 flex items-start gap-2.5 sm:gap-3">
+              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="text-[11px] sm:text-xs text-amber-900 leading-relaxed font-semibold">
+                <strong>Garantia de Satisfação:</strong> Seus dados são protegidos e o arquivo PDF é enviado diretamente para o seu e-mail logo após a aprovação do pagamento.
+              </div>
+            </div>
+
+          </div>
+
+          {/* Form Column: order-2 on mobile (appears AFTER summary), order-1 on desktop (lg) */}
+          <div className="order-2 lg:order-1 lg:col-span-7 bg-white rounded-3xl p-5 sm:p-8 border border-slate-100 shadow-soft space-y-6">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black text-brand-navy tracking-tight">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-brand-navy tracking-tight break-words">
                 Finalizar Compra
               </h1>
               <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-1">
@@ -236,8 +317,8 @@ export const CheckoutPage: React.FC = () => {
               
               {/* Customer Info Section */}
               <div className="space-y-4">
-                <h3 className="text-sm font-black text-brand-navy uppercase tracking-wider flex items-center gap-2">
-                  <User className="w-4 h-4 text-brand-purple" />
+                <h3 className="text-xs sm:text-sm font-black text-brand-navy uppercase tracking-wider flex items-center gap-2">
+                  <User className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-brand-purple shrink-0" />
                   <span>1. Seus Dados para Entrega</span>
                 </h3>
 
@@ -249,7 +330,7 @@ export const CheckoutPage: React.FC = () => {
                     type="text"
                     {...register('name')}
                     placeholder="Ex: Maria Clara Souza"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-pink/50 focus:border-brand-pink text-sm font-semibold transition-all"
+                    className="w-full px-3.5 sm:px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-pink/50 focus:border-brand-pink text-xs sm:text-sm font-semibold transition-all"
                   />
                   {errors.name && (
                     <p className="text-rose-600 text-xs font-bold mt-1.5">{errors.name.message}</p>
@@ -267,7 +348,7 @@ export const CheckoutPage: React.FC = () => {
                     {...register('cpfCnpj')}
                     placeholder="Digite seu CPF ou CNPJ"
                     maxLength={18}
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-pink/50 focus:border-brand-pink text-sm font-semibold transition-all"
+                    className="w-full px-3.5 sm:px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-pink/50 focus:border-brand-pink text-xs sm:text-sm font-semibold transition-all"
                   />
                   <p className="text-[11px] text-slate-500 font-medium mt-1">
                     Necessário para gerar seu pagamento Pix.
@@ -285,11 +366,11 @@ export const CheckoutPage: React.FC = () => {
                       type="email"
                       {...register('email')}
                       placeholder="seuemail@exemplo.com"
-                      className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-pink/50 focus:border-brand-pink text-sm font-semibold transition-all"
+                      className="w-full px-3.5 sm:px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-pink/50 focus:border-brand-pink text-xs sm:text-sm font-semibold transition-all"
                     />
                     <Mail className="w-4 h-4 text-slate-400 absolute right-4 top-3.5 pointer-events-none" />
                   </div>
-                  <p className="text-[11px] text-slate-500 font-medium mt-1">
+                  <p className="text-[11px] text-slate-500 font-medium mt-1 leading-relaxed">
                     Certifique-se de digitar corretamente. O arquivo PDF será enviado diretamente para este e-mail após a confirmação do pagamento.
                   </p>
                   {errors.email && (
@@ -300,15 +381,15 @@ export const CheckoutPage: React.FC = () => {
 
               {/* Payment Method Section */}
               <div className="space-y-4 pt-4 border-t border-slate-100">
-                <h3 className="text-sm font-black text-brand-navy uppercase tracking-wider flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-brand-green" />
+                <h3 className="text-xs sm:text-sm font-black text-brand-navy uppercase tracking-wider flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-brand-green shrink-0" />
                   <span>2. Forma de Pagamento</span>
                 </h3>
 
                 <div className="space-y-3">
                   {/* PIX Option */}
                   <label
-                    className={`p-4 rounded-2xl border-2 cursor-pointer flex items-center justify-between transition-all ${
+                    className={`p-3.5 sm:p-4 rounded-2xl border-2 cursor-pointer flex items-center justify-between transition-all ${
                       selectedPaymentMethod === 'pix'
                         ? 'border-brand-green bg-emerald-50/40 shadow-xs'
                         : 'border-slate-200 hover:border-slate-300 bg-white'
@@ -322,17 +403,17 @@ export const CheckoutPage: React.FC = () => {
                         className="w-4 h-4 text-brand-green focus:ring-brand-green"
                       />
                       <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-xs">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-xs shrink-0">
                           <QrCode className="w-5 h-5" />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-extrabold text-sm text-brand-navy">PIX</span>
-                            <span className="text-[10px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full uppercase">
+                            <span className="font-extrabold text-xs sm:text-sm text-brand-navy">PIX</span>
+                            <span className="text-[9px] sm:text-[10px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full uppercase">
                               Imediato
                             </span>
                           </div>
-                          <p className="text-xs text-slate-500 font-medium">
+                          <p className="text-[11px] sm:text-xs text-slate-500 font-medium">
                             Aprovação instantânea e liberação em segundos
                           </p>
                         </div>
@@ -347,7 +428,7 @@ export const CheckoutPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="candy-button w-full bg-brand-yellow hover:bg-brand-yellow-hover text-brand-navy font-black text-lg py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-float disabled:opacity-50 transition-all"
+                  className="candy-button w-full bg-brand-yellow hover:bg-brand-yellow-hover text-brand-navy font-black text-base sm:text-lg py-3.5 sm:py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-float disabled:opacity-50 transition-all"
                 >
                   {submitting ? (
                     <>
@@ -364,86 +445,6 @@ export const CheckoutPage: React.FC = () => {
               </div>
 
             </form>
-          </div>
-
-          {/* Right Column: Order Summary (lg:col-span-5) */}
-          <div className="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-soft space-y-6">
-            <h3 className="text-base font-black text-brand-navy tracking-tight flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-brand-yellow" />
-              <span>Resumo do Pedido</span>
-            </h3>
-
-            {/* Product Item Card */}
-            <div className="flex gap-4 p-4 rounded-2xl bg-brand-ice-50 border border-brand-ice-200">
-              <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-200 shrink-0 border border-white shadow-xs">
-                {product.thumbnail_url ? (
-                  <img
-                    src={getProductImageUrl(product.thumbnail_url)}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xs font-bold text-slate-400">
-                    PDF
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-black uppercase text-brand-pink tracking-wider block">
-                  {product.category_name || 'Material Pedagógico'}
-                </span>
-                <h4 className="text-sm font-black text-brand-navy leading-snug line-clamp-2 mt-0.5">
-                  {product.name}
-                </h4>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs font-bold text-slate-500">1x unidade</span>
-                  <span className="text-sm font-black text-brand-navy">
-                    {formatCurrency(product.price)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* What is included bullet points */}
-            <div className="space-y-2.5 text-xs font-semibold text-slate-600 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-              <div className="flex items-center gap-2 text-brand-navy font-bold">
-                <CheckCircle2 className="w-4 h-4 text-brand-green shrink-0" />
-                <span>Arquivo digital original em alta definição</span>
-              </div>
-              <div className="flex items-center gap-2 text-brand-navy font-bold">
-                <CheckCircle2 className="w-4 h-4 text-brand-green shrink-0" />
-                <span>Pronto para imprimir em impressora comum</span>
-              </div>
-              <div className="flex items-center gap-2 text-brand-navy font-bold">
-                <CheckCircle2 className="w-4 h-4 text-brand-green shrink-0" />
-                <span>Acesso vitalício ao material</span>
-              </div>
-            </div>
-
-            {/* Pricing Summary Breakdown */}
-            <div className="space-y-3 pt-3 border-t border-slate-100 text-sm">
-              <div className="flex justify-between text-slate-600 font-semibold">
-                <span>Subtotal</span>
-                <span>{formatCurrency(product.price)}</span>
-              </div>
-              <div className="flex justify-between text-slate-600 font-semibold">
-                <span>Frete (Envio Digital)</span>
-                <span className="text-brand-green font-bold">GRÁTIS</span>
-              </div>
-              <div className="flex justify-between text-lg font-black text-brand-navy pt-2 border-t border-slate-100">
-                <span>Total a Pagar</span>
-                <span className="text-brand-navy">{formatCurrency(product.price)}</span>
-              </div>
-            </div>
-
-            {/* Security Guarantee */}
-            <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80 flex items-start gap-3">
-              <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <div className="text-xs text-amber-900 leading-relaxed font-semibold">
-                <strong>Garantia de Satisfação:</strong> Seus dados são protegidos e o arquivo PDF é enviado diretamente para o seu e-mail logo após a aprovação do pagamento.
-              </div>
-            </div>
-
           </div>
 
         </div>
