@@ -1,4 +1,4 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+﻿import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { ApiResponse } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
@@ -156,7 +156,7 @@ export function getProductImageUrl(imagePath: string | null | undefined): string
     imageUrl.origin === apiOrigin &&
     imageUrl.pathname.startsWith('/uploads/product-images/')
   ) {
-    return `/image-proxy${imageUrl.pathname}${imageUrl.search}`;
+    return import.meta.env.DEV ? `/image-proxy${imageUrl.pathname}${imageUrl.search}` : imageUrl.toString();
   }
 
   return imageUrl.toString();
@@ -172,5 +172,6 @@ export function getErrorMessage(error: unknown): string {
     if (error.message) return error.message;
   }
   if (error instanceof Error) return error.message;
-  return 'Ocorreu um erro inesperado na comunicação com o servidor.';
+  return 'Ocorreu um erro inesperado na comunicaÃ§Ã£o com o servidor.';
 }
+
