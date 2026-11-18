@@ -18,7 +18,7 @@ export const CustomerDownloadPage: React.FC = () => {
         <div className="space-y-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase tracking-wider">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Link Seguro Autorizado</span>
+            <span>Download Seguro Autorizado</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-brand-navy">
             Seu Material Digital está Pronto!
@@ -31,7 +31,7 @@ export const CustomerDownloadPage: React.FC = () => {
         <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 text-left space-y-2.5 text-xs text-slate-700 font-semibold">
           <div className="flex items-center gap-2 text-brand-navy font-bold">
             <ShieldCheck className="w-4 h-4 text-brand-green" />
-            <span>Link protegido e intransferível</span>
+            <span>Arquivo protegido e intransferível</span>
           </div>
           <div className="flex items-center gap-2 text-brand-navy font-bold">
             <FileText className="w-4 h-4 text-brand-purple" />

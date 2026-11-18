@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Menu, X, Sparkles, BookOpen, Layers, CheckCircle2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Menu, X, ArrowUpRight, Scissors } from 'lucide-react';
 
 interface StoreHeaderProps {
   onBuyClick?: () => void;
-  productPrice?: number;
 }
 
-export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBuyClick, productPrice }) => {
+export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBuyClick }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const navigate = useNavigate();
 
-  const handleScrollTo = (id: string) => {
+  const scrollTo = (id: string) => {
     setMobileMenuOpen(false);
     const element = document.getElementById(id);
     if (element) {
@@ -20,126 +18,96 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBuyClick, productPri
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-brand-navy-100/60 shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-navy-800 to-brand-navy-700 flex items-center justify-center shadow-candy text-white font-extrabold text-xl group-hover:scale-105 transition-transform">
-              <Sparkles className="w-6 h-6 text-brand-yellow-bright animate-pulse" />
+    <>
+      {/* 1. Barra de anúncio superior */}
+      <div className="w-full bg-[#f4effa] text-[#5c4d74] font-semibold py-1.5 sm:py-2 px-3 text-center border-b border-[#ece4f5] flex items-center justify-center gap-1.5 overflow-hidden">
+        <Scissors className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#886ba8] shrink-0" />
+        <p className="truncate text-[10px] sm:text-xs">Recortar, colar e descobrir. Um mundo de possibilidades!</p>
+        <span className="text-[#886ba8] shrink-0">✦</span>
+      </div>
+
+      {/* 2. Header principal fixo */}
+      <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#f1ebf6]">
+        <div className="max-w-6xl mx-auto px-3.5 sm:px-6 h-16 sm:h-[72px] flex items-center justify-between">
+          {/* Logo e nome da marca */}
+          <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0" aria-label="Meu Mundo de Recortes - Início">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden border border-[#ede5f6] shadow-xs group-hover:scale-105 transition-transform flex items-center justify-center bg-[#5bbfe8] shrink-0">
+              <img
+                src="/logo.png"
+                alt="Meu Mundo de Recortes"
+                className="w-full h-full object-cover object-center"
+              />
             </div>
-            <div>
-              <span className="font-extrabold text-xl sm:text-2xl tracking-tight text-brand-navy block leading-none">
-                Educa<span className="text-brand-pink">Kids</span>
+            <div className="flex flex-col">
+              <span className="font-black text-xs sm:text-base leading-none text-[#1e192c] tracking-tight">
+                Meu Mundo
               </span>
-              <span className="text-xs font-bold text-slate-500 tracking-wider uppercase block mt-1">
-                Materiais Digitais
+              <span className="font-black text-xs sm:text-base leading-tight text-[#1e192c] tracking-tight">
+                de Recortes.
               </span>
             </div>
           </Link>
 
-          {/* Center Navigation Links */}
+          {/* Navegação Desktop */}
           <nav className="hidden md:flex items-center gap-8">
             <button
-              onClick={() => handleScrollTo('material')}
-              className="text-brand-navy-800 hover:text-brand-pink font-bold text-sm tracking-wide transition-colors flex items-center gap-1.5"
+              onClick={() => scrollTo('materiais')}
+              className="text-xs font-extrabold text-[#5c526f] hover:text-[#7f5fa8] transition-colors cursor-pointer"
             >
-              <BookOpen className="w-4 h-4 text-brand-purple" />
-              O material
+              Nossos materiais
             </button>
             <button
-              onClick={() => handleScrollTo('por-dentro')}
-              className="text-brand-navy-800 hover:text-brand-pink font-bold text-sm tracking-wide transition-colors flex items-center gap-1.5"
+              onClick={() => scrollTo('por-dentro')}
+              className="text-xs font-extrabold text-[#5c526f] hover:text-[#7f5fa8] transition-colors cursor-pointer"
             >
-              <Layers className="w-4 h-4 text-brand-green" />
-              Por dentro
+              Por dentro do PDF
             </button>
             <button
-              onClick={() => handleScrollTo('como-usar')}
-              className="text-brand-navy-800 hover:text-brand-pink font-bold text-sm tracking-wide transition-colors flex items-center gap-1.5"
+              onClick={() => scrollTo('como-funciona')}
+              className="text-xs font-extrabold text-[#5c526f] hover:text-[#7f5fa8] transition-colors cursor-pointer"
             >
-              <CheckCircle2 className="w-4 h-4 text-brand-yellow" />
-              Como usar
+              Como funciona
             </button>
           </nav>
 
-          {/* Right Action: Buy Button */}
-          <div className="hidden sm:flex items-center gap-4">
-            <button
-              onClick={onBuyClick}
-              className="candy-button bg-brand-yellow hover:bg-brand-yellow-hover text-brand-navy font-black text-sm px-6 py-3 rounded-full flex items-center gap-2 cursor-pointer transition-all"
-            >
-              <ShoppingBag className="w-4 h-4 stroke-[2.5]" />
-              <span>QUERO O MATERIAL</span>
-              {productPrice !== undefined && (
-                <span className="bg-brand-navy text-white text-xs font-extrabold px-2 py-0.5 rounded-full ml-1">
-                  R$ {productPrice.toFixed(2).replace('.', ',')}
-                </span>
-              )}
-            </button>
-          </div>
-
-          {/* Mobile menu trigger */}
-          <div className="flex md:hidden items-center gap-2">
-            <button
-              onClick={onBuyClick}
-              className="candy-button bg-brand-yellow text-brand-navy font-black text-xs px-3.5 py-2 rounded-full flex items-center gap-1.5"
-            >
-              <ShoppingBag className="w-3.5 h-3.5" />
-              <span>COMPRAR</span>
-            </button>
+          {/* Botão de Menu Mobile */}
+          <div className="flex md:hidden items-center shrink-0">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl text-brand-navy-800 hover:bg-slate-100 transition-colors"
-              aria-label="Abrir menu"
+              className="w-9 h-9 rounded-full bg-[#f4effa] text-[#4f3f6b] flex items-center justify-center hover:bg-[#ede5f7] transition-colors cursor-pointer"
+              aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-slate-200 px-6 py-6 space-y-4 animate-in slide-in-from-top-4 duration-200">
-          <nav className="flex flex-col space-y-3">
-            <button
-              onClick={() => handleScrollTo('material')}
-              className="text-left font-bold text-brand-navy text-base py-2 border-b border-slate-100 flex items-center justify-between"
-            >
-              <span>O material</span>
-              <BookOpen className="w-4 h-4 text-brand-purple" />
-            </button>
-            <button
-              onClick={() => handleScrollTo('por-dentro')}
-              className="text-left font-bold text-brand-navy text-base py-2 border-b border-slate-100 flex items-center justify-between"
-            >
-              <span>Por dentro</span>
-              <Layers className="w-4 h-4 text-brand-green" />
-            </button>
-            <button
-              onClick={() => handleScrollTo('como-usar')}
-              className="text-left font-bold text-brand-navy text-base py-2 border-b border-slate-100 flex items-center justify-between"
-            >
-              <span>Como usar</span>
-              <CheckCircle2 className="w-4 h-4 text-brand-yellow" />
-            </button>
-          </nav>
-          <div className="pt-2">
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onBuyClick?.();
-              }}
-              className="candy-button w-full justify-center bg-brand-yellow hover:bg-brand-yellow-hover text-brand-navy font-black text-base py-3.5 rounded-full flex items-center gap-2"
-            >
-              <ShoppingBag className="w-5 h-5 stroke-[2.5]" />
-              <span>QUERO O MATERIAL AGORA</span>
-            </button>
+        {/* Menu Dropdown Mobile */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-[#f1ebf6] px-6 py-4 shadow-xl animate-in slide-in-from-top-2 duration-150">
+            <div className="flex flex-col space-y-4">
+              <button
+                onClick={() => scrollTo('materiais')}
+                className="text-left font-bold text-sm text-[#3b324d] hover:text-[#7f5fa8] py-1 transition-colors"
+              >
+                Nossos materiais
+              </button>
+              <button
+                onClick={() => scrollTo('por-dentro')}
+                className="text-left font-bold text-sm text-[#3b324d] hover:text-[#7f5fa8] py-1 transition-colors"
+              >
+                Por dentro do PDF
+              </button>
+              <button
+                onClick={() => scrollTo('como-funciona')}
+                className="text-left font-bold text-sm text-[#3b324d] hover:text-[#7f5fa8] py-1 transition-colors"
+              >
+                Como funciona
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-    </header>
+        )}
+      </header>
+    </>
   );
 };

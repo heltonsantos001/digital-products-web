@@ -1,181 +1,156 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, Mail, Shield, FileText, HelpCircle, X } from 'lucide-react';
+import { ArrowUpRight, Heart, X, Shield, FileText } from 'lucide-react';
 
 export const StoreFooter: React.FC = () => {
-  const [modalType, setModalType] = useState<'privacy' | 'terms' | 'support' | null>(null);
+  const [modalType, setModalType] = useState<'terms' | 'privacy' | null>(null);
+
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <>
-      <footer className="bg-slate-900 text-slate-400 py-12 border-t border-slate-800 text-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-            
-            {/* Brand identity */}
-            <div className="space-y-4 md:col-span-2">
+      <footer className="bg-[#fffdf9] border-t border-[#f0ebf5] pt-12 pb-8 text-[#2e263d]">
+        <div className="max-w-6xl mx-auto px-5 sm:px-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-10">
+            {/* Identidade */}
+            <div className="md:col-span-5 space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-navy-800 to-brand-navy-700 flex items-center justify-center text-white">
-                  <Sparkles className="w-5 h-5 text-brand-yellow" />
+                <div className="w-10 h-10 rounded-xl overflow-hidden border border-[#ede5f6] shadow-xs flex items-center justify-center bg-[#5bbfe8]">
+                  <img
+                    src="/logo.png"
+                    alt="Meu Mundo de Recortes"
+                    className="w-full h-full object-cover object-center"
+                  />
                 </div>
-                <span className="font-extrabold text-xl text-white tracking-tight">
-                  Educa<span className="text-brand-pink">Kids</span>
+                <span className="font-black text-lg text-[#1e192c]">
+                  Meu Mundo de Recortes.
                 </span>
               </div>
-              <p className="text-slate-400 text-xs sm:text-sm leading-relaxed max-w-sm">
-                Plataforma oficial de materiais pedagógicos e educativos digitais. Criamos conteúdos lúdicos que estimulam o aprendizado prático e saudável para crianças.
+              <p className="text-xs sm:text-sm text-[#746b82] leading-relaxed max-w-sm">
+                Recortar, colar e descobrir.<br />
+                Um mundo para criar em família.
               </p>
-              <div className="text-xs text-slate-400 bg-slate-800/80 p-3 rounded-xl border border-slate-700 inline-block">
-                ⚡ Entrega 100% digital via streaming protegido por e-mail após confirmação do pagamento.
-              </div>
             </div>
 
-            {/* Quick Links / Legal */}
-            <div className="space-y-3">
-              <h4 className="text-white font-extrabold text-sm uppercase tracking-wider">
-                Informações Legais
-              </h4>
-              <ul className="space-y-2 text-xs">
-                <li>
-                  <button
-                    onClick={() => setModalType('privacy')}
-                    className="hover:text-white transition-colors flex items-center gap-1.5"
-                  >
-                    <Shield className="w-3.5 h-3.5 text-brand-green" />
-                    Política de Privacidade
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => setModalType('terms')}
-                    className="hover:text-white transition-colors flex items-center gap-1.5"
-                  >
-                    <FileText className="w-3.5 h-3.5 text-brand-yellow" />
-                    Termos de Uso
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => setModalType('support')}
-                    className="hover:text-white transition-colors flex items-center gap-1.5"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5 text-brand-purple" />
-                    Central de Ajuda & Dúvidas
-                  </button>
-                </li>
-              </ul>
+            {/* Links Rápidos - Coluna 1 */}
+            <div className="md:col-span-3 space-y-2.5">
+              <button
+                onClick={() => scrollTo('materiais')}
+                className="block text-xs font-bold text-[#5c536c] hover:text-[#7f5fa8] transition-colors"
+              >
+                Nossos materiais
+              </button>
+              <button
+                onClick={() => scrollTo('como-funciona')}
+                className="block text-xs font-bold text-[#5c536c] hover:text-[#7f5fa8] transition-colors"
+              >
+                Como funciona
+              </button>
+              <button
+                onClick={() => scrollTo('duvidas')}
+                className="block text-xs font-bold text-[#5c536c] hover:text-[#7f5fa8] transition-colors"
+              >
+                Dúvidas frequentes
+              </button>
             </div>
 
-            {/* Support / Contact */}
-            <div className="space-y-3">
-              <h4 className="text-white font-extrabold text-sm uppercase tracking-wider">
-                Atendimento & Suporte
-              </h4>
-              <p className="text-xs leading-relaxed">
-                Segunda a Sexta, das 09h às 18h.
-              </p>
-              <div className="flex items-center gap-2 text-xs text-brand-yellow font-bold">
-                <Mail className="w-4 h-4 shrink-0" />
-                <span>suporte@educakids.com.br</span>
-              </div>
-              <div className="pt-2">
-                <Link
-                  to="/admin/login"
-                  className="text-[11px] text-slate-400 hover:text-slate-300 underline block"
+            {/* Links Rápidos - Coluna 2 */}
+            <div className="md:col-span-4 space-y-2.5">
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-bold text-[#5c536c] hover:text-[#7f5fa8] transition-colors"
+              >
+                Instagram <ArrowUpRight className="w-3.5 h-3.5" />
+              </a>
+              <div>
+                <button
+                  onClick={() => setModalType('terms')}
+                  className="block text-xs font-bold text-[#5c536c] hover:text-[#7f5fa8] transition-colors"
                 >
-                  Área do Administrador
-                </Link>
+                  Condições de uso
+                </button>
+              </div>
+              <div>
+                <button
+                  onClick={() => setModalType('privacy')}
+                  className="block text-xs font-bold text-[#5c536c] hover:text-[#7f5fa8] transition-colors"
+                >
+                  Compra e privacidade
+                </button>
               </div>
             </div>
-
           </div>
 
-          <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-            <p>© {new Date().getFullYear()} EducaKids Digital. Todos os direitos reservados.</p>
-            <p>Arquitetura segura com download temporário com hash criptográfico.</p>
+          <div className="border-t border-[#f0ebf5] pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#827891]">
+            <p>© 2026 Meu Mundo de Recortes · Idealização: Tony Herculano</p>
+            <div className="flex items-center gap-1.5 font-medium">
+              <Heart className="w-3.5 h-3.5 text-[#e57a8a] fill-[#e57a8a]/20" />
+              <span>Para usar em família</span>
+            </div>
           </div>
         </div>
       </footer>
 
-      {/* Legal & Support Modals */}
+      {/* Modais de Termos e Privacidade */}
       {modalType && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 relative shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 relative shadow-2xl animate-in zoom-in-95 duration-150">
             <button
               onClick={() => setModalType(null)}
-              className="absolute top-5 right-5 p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-[#f4effa] text-[#55466f] flex items-center justify-center hover:bg-[#ede5f7] transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
-
-            {modalType === 'privacy' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-brand-navy font-black text-xl">
-                  <Shield className="w-6 h-6 text-brand-green" />
-                  <span>Política de Privacidade</span>
-                </div>
-                <div className="text-sm text-slate-600 space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-                  <p>
-                    A sua privacidade é prioridade para nós. Os dados coletados (nome e e-mail) durante a compra são utilizados exclusivamente para:
-                  </p>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>Identificação do pedido e emissão do comprovante.</li>
-                    <li>Envio automatizado do link seguro de download dos materiais adquiridos.</li>
-                    <li>Comunicação de suporte referente à compra.</li>
-                  </ul>
-                  <p>
-                    Não compartilhamos, alugamos ou comercializamos dados com terceiros. Todos os pagamentos são processados em ambientes criptografados com certificados SSL/TLS.
-                  </p>
-                </div>
-              </div>
-            )}
 
             {modalType === 'terms' && (
               <div className="space-y-4">
-                <div className="flex items-center gap-2 text-brand-navy font-black text-xl">
-                  <FileText className="w-6 h-6 text-brand-yellow" />
-                  <span>Termos de Uso</span>
+                <div className="flex items-center gap-2 text-[#1e192c] font-black text-xl">
+                  <FileText className="w-5 h-5 text-[#f59e0b]" />
+                  <span>Condições de Uso</span>
                 </div>
-                <div className="text-sm text-slate-600 space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                <div className="text-xs sm:text-sm text-[#665d75] space-y-3 max-h-[60vh] overflow-y-auto pr-2 leading-relaxed">
                   <p>
-                    Ao adquirir os produtos digitais nesta plataforma, você concorda com as seguintes condições de uso:
+                    O material digital <strong>Meu Mundo de Recortes</strong> é disponibilizado em formato PDF de alta resolução, pronto para impressão no formato A4.
                   </p>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>O material é para uso pessoal, pedagógico ou escolar não comercial.</li>
-                    <li>É expressamente proibida a revenda, sublicenciamento ou redistribuição pública dos arquivos digitais.</li>
-                    <li>Você tem o direito de imprimir o material quantas vezes forem necessárias para as crianças sob sua responsabilidade.</li>
-                    <li>O link de download é pessoal e intransferível, possuindo validade temporal e limite de tentativas por segurança.</li>
-                  </ul>
+                  <p>
+                    <strong>Uso Permitido:</strong> O material destina-se ao uso pessoal, familiar ou pedagógico sem fins comerciais. Você pode imprimir quantas cópias forem necessárias para as crianças sob seu acompanhamento.
+                  </p>
+                  <p>
+                    <strong>Restrições:</strong> É vedada a revenda, compartilhamento público, sublicenciamento ou comercialização dos arquivos digitais em qualquer plataforma online ou mídia física.
+                  </p>
                 </div>
               </div>
             )}
 
-            {modalType === 'support' && (
+            {modalType === 'privacy' && (
               <div className="space-y-4">
-                <div className="flex items-center gap-2 text-brand-navy font-black text-xl">
-                  <HelpCircle className="w-6 h-6 text-brand-purple" />
-                  <span>Central de Ajuda & Suporte</span>
+                <div className="flex items-center gap-2 text-[#1e192c] font-black text-xl">
+                  <Shield className="w-5 h-5 text-[#10b981]" />
+                  <span>Compra e Privacidade</span>
                 </div>
-                <div className="text-sm text-slate-600 space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-                  <p className="font-bold text-brand-navy">Como recebo meu produto?</p>
+                <div className="text-xs sm:text-sm text-[#665d75] space-y-3 max-h-[60vh] overflow-y-auto pr-2 leading-relaxed">
                   <p>
-                    Logo após a confirmação do pagamento, você receberá um e-mail com o link direto e seguro para baixar seus arquivos em formato PDF ou compactado.
+                    Sua privacidade é respeitada com total transparência.
                   </p>
-                  <p className="font-bold text-brand-navy">Não recebi o e-mail, e agora?</p>
                   <p>
-                    Verifique a sua caixa de Spam ou Lixeira. Se não encontrar, envie um e-mail para <strong className="text-brand-pink">suporte@educakids.com.br</strong> informando o e-mail utilizado na compra para reenvio imediato.
+                    <strong>Dados de Compra:</strong> As informações coletadas durante o checkout (como nome e e-mail) destinam-se exclusivamente à identificação do seu pedido e ao envio automático do acesso seguro para download dos arquivos.
                   </p>
-                  <p className="font-bold text-brand-navy">Posso imprimir em qualquer impressora?</p>
                   <p>
-                    Sim! Os arquivos vêm configurados no padrão A4 pronto para impressão doméstica ou gráfica rápida, colorida ou preto e branco.
+                    <strong>Pagamento Seguro:</strong> O processamento do pagamento ocorre em ambiente criptografado e seguro com proteção de dados.
                   </p>
                 </div>
               </div>
             )}
 
-            <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+            <div className="mt-6 pt-4 border-t border-[#f0e8f6] flex justify-end">
               <button
                 onClick={() => setModalType(null)}
-                className="px-5 py-2.5 rounded-xl bg-brand-navy text-white text-sm font-bold hover:bg-brand-navy-700 transition-colors"
+                className="px-5 py-2.5 rounded-xl bg-[#1c1e33] text-white text-xs font-bold hover:bg-[#121424] transition-colors"
               >
                 Entendi e Fechar
               </button>

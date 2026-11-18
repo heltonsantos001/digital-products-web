@@ -7,7 +7,7 @@ import { productService } from '../../services/product.service';
 import { orderService } from '../../services/order.service';
 import { Product } from '../../types';
 import { formatCurrency, parseProductMeta } from '../../utils/formatters';
-import { getErrorMessage } from '../../services/api';
+import { getErrorMessage, getProductImageUrl } from '../../services/api';
 import {
   ShoppingBag,
   ShieldCheck,
@@ -17,17 +17,60 @@ import {
   User,
   CreditCard,
   QrCode,
-  FileText,
   Loader2,
   Sparkles,
   AlertCircle,
   CheckCircle2,
 } from 'lucide-react';
 
+function isValidCpfCnpj(value: string): boolean {
+  const digits = value.replace(/\D/g, '');
+
+  if (/^(\d)\1+$/.test(digits)) return false;
+
+  if (digits.length === 11) {
+    const calculate = (length: number) => {
+      let sum = 0;
+      for (let i = 0; i < length; i++) {
+        sum += Number(digits[i]) * (length + 1 - i);
+      }
+      const remainder = (sum * 10) % 11;
+      return remainder === 10 ? 0 : remainder;
+    };
+
+    return calculate(9) === Number(digits[9]) &&
+      calculate(10) === Number(digits[10]);
+  }
+
+  if (digits.length === 14) {
+    const calculate = (length: number) => {
+      const weights = length === 12
+        ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+        : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+      const sum = weights.reduce(
+        (total, weight, index) => total + Number(digits[index]) * weight,
+        0
+      );
+
+      const remainder = sum % 11;
+      return remainder < 2 ? 0 : 11 - remainder;
+    };
+
+    return calculate(12) === Number(digits[12]) &&
+      calculate(13) === Number(digits[13]);
+  }
+
+  return false;
+}
 const checkoutFormSchema = z.object({
   name: z.string().min(2, 'Informe seu nome completo'),
   email: z.string().email('Informe um e-mail válido para entrega do arquivo'),
-  payment_method: z.enum(['pix', 'simulated', 'bank_slip']),
+  cpfCnpj: z.string().refine(
+    isValidCpfCnpj,
+    'Informe um CPF ou CNPJ válido'
+  ),
+  payment_method: z.literal('pix'),
 });
 
 type CheckoutFormData = z.infer<typeof checkoutFormSchema>;
@@ -52,6 +95,7 @@ export const CheckoutPage: React.FC = () => {
     defaultValues: {
       name: '',
       email: '',
+      cpfCnpj: '',
       payment_method: 'pix',
     },
   });
@@ -94,6 +138,7 @@ export const CheckoutPage: React.FC = () => {
         customer: {
           name: data.name.trim(),
           email: data.email.trim().toLowerCase(),
+          cpfCnpj: data.cpfCnpj.replace(/\D/g, ''),
         },
         items: [
           {
@@ -102,7 +147,6 @@ export const CheckoutPage: React.FC = () => {
           },
         ],
         payment_method: data.payment_method,
-        gateway: 'simulated',
       });
 
       // Navigate to payment page with order UUID
@@ -214,6 +258,26 @@ export const CheckoutPage: React.FC = () => {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    CPF ou CNPJ *
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    {...register('cpfCnpj')}
+                    placeholder="Digite seu CPF ou CNPJ"
+                    maxLength={18}
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-pink/50 focus:border-brand-pink text-sm font-semibold transition-all"
+                  />
+                  <p className="text-[11px] text-slate-500 font-medium mt-1">
+                    Necessário para gerar seu pagamento Pix.
+                  </p>
+                  {errors.cpfCnpj && (
+                    <p className="text-rose-600 text-xs font-bold mt-1.5">{errors.cpfCnpj.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     E-mail para Recebimento do Arquivo *
                   </label>
                   <div className="relative">
@@ -226,7 +290,7 @@ export const CheckoutPage: React.FC = () => {
                     <Mail className="w-4 h-4 text-slate-400 absolute right-4 top-3.5 pointer-events-none" />
                   </div>
                   <p className="text-[11px] text-slate-500 font-medium mt-1">
-                    Certifique-se de digitar corretamente. O link de download será enviado para cá.
+                    Certifique-se de digitar corretamente. O arquivo PDF será enviado diretamente para este e-mail após a confirmação do pagamento.
                   </p>
                   {errors.email && (
                     <p className="text-rose-600 text-xs font-bold mt-1.5">{errors.email.message}</p>
@@ -275,71 +339,6 @@ export const CheckoutPage: React.FC = () => {
                       </div>
                     </div>
                   </label>
-
-                  {/* Simulated Gateway Option */}
-                  <label
-                    className={`p-4 rounded-2xl border-2 cursor-pointer flex items-center justify-between transition-all ${
-                      selectedPaymentMethod === 'simulated'
-                        ? 'border-brand-purple bg-purple-50/40 shadow-xs'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        value="simulated"
-                        {...register('payment_method')}
-                        className="w-4 h-4 text-brand-purple focus:ring-brand-purple"
-                      />
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-black text-xs">
-                          <Sparkles className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-extrabold text-sm text-brand-navy">Gateway Simulado</span>
-                            <span className="text-[10px] font-black bg-purple-600 text-white px-2 py-0.5 rounded-full uppercase">
-                              Ambiente de Testes
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-500 font-medium">
-                            Permite simular o fluxo com resposta imediata
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </label>
-
-                  {/* Bank Slip Option */}
-                  <label
-                    className={`p-4 rounded-2xl border-2 cursor-pointer flex items-center justify-between transition-all ${
-                      selectedPaymentMethod === 'bank_slip'
-                        ? 'border-brand-navy bg-slate-50 shadow-xs'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        value="bank_slip"
-                        {...register('payment_method')}
-                        className="w-4 h-4 text-brand-navy focus:ring-brand-navy"
-                      />
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center font-black text-xs">
-                          <FileText className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-extrabold text-sm text-brand-navy">Boleto Bancário</span>
-                          </div>
-                          <p className="text-xs text-slate-500 font-medium">
-                            Compensação em até 1 a 2 dias úteis
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </label>
                 </div>
               </div>
 
@@ -379,7 +378,7 @@ export const CheckoutPage: React.FC = () => {
               <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-200 shrink-0 border border-white shadow-xs">
                 {product.thumbnail_url ? (
                   <img
-                    src={product.thumbnail_url}
+                    src={getProductImageUrl(product.thumbnail_url)}
                     alt={product.name}
                     className="w-full h-full object-cover"
                   />
@@ -441,7 +440,7 @@ export const CheckoutPage: React.FC = () => {
             <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80 flex items-start gap-3">
               <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div className="text-xs text-amber-900 leading-relaxed font-semibold">
-                <strong>Garantia de Satisfação:</strong> Seus dados são protegidos e seu link de download é gerado automaticamente logo após a aprovação.
+                <strong>Garantia de Satisfação:</strong> Seus dados são protegidos e o arquivo PDF é enviado diretamente para o seu e-mail logo após a aprovação do pagamento.
               </div>
             </div>
 

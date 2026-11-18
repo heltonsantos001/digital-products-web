@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   ClipboardList,
   Settings,
-  Sparkles,
   LogOut,
   X,
   ExternalLink,
@@ -109,12 +108,16 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) =
           {/* Logo Header */}
           <div className="h-20 flex items-center justify-between px-6 border-b border-brand-navy-800">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-pink to-brand-yellow flex items-center justify-center text-brand-navy font-black text-lg shadow-candy">
-                <Sparkles className="w-5 h-5 text-brand-navy" />
+              <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-candy">
+                <img
+                  src="/logo.png"
+                  alt="Meu Mundo de Recortes"
+                  className="w-full h-full object-cover object-center"
+                />
               </div>
               <div>
-                <span className="font-extrabold text-lg text-white block leading-tight">
-                  Educa<span className="text-brand-pink">Kids</span>
+                <span className="font-extrabold text-sm text-white block leading-tight">
+                  Meu Mundo de Recortes
                 </span>
                 <span className="text-[10px] uppercase tracking-wider font-extrabold text-brand-yellow-bright block">
                   Painel Administrativo

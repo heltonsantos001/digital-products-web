@@ -19,7 +19,6 @@ import {
   Sparkles,
   Download,
 } from 'lucide-react';
-import axios from 'axios';
 
 export const PaymentPage: React.FC = () => {
   const { uuid } = useParams<{ uuid: string }>();
@@ -34,7 +33,6 @@ export const PaymentPage: React.FC = () => {
   const [paymentInfo, setPaymentInfo] = useState<CheckoutResult['payment'] | null>(stateData?.payment || null);
   const [loading, setLoading] = useState<boolean>(true);
   const [copied, setCopied] = useState<boolean>(false);
-  const [simulatingWebhook, setSimulatingWebhook] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const pollIntervalRef = useRef<any>(null);
@@ -83,39 +81,6 @@ export const PaymentPage: React.FC = () => {
     setTimeout(() => setCopied(false), 3000);
   };
 
-  // Helper for test/simulated payment confirmation in dev
-  const handleSimulatePaymentConfirmation = async () => {
-    if (!uuid || !order) return;
-    setSimulatingWebhook(true);
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
-      // In simulated gateway, we call the webhook or status update
-      const eventPayload = {
-        event_id: `evt_sim_${Date.now()}`,
-        event_type: 'payment.confirmed',
-        transaction_id: paymentInfo?.transactionId || `tx_${Date.now()}`,
-        order_uuid: uuid,
-        amount: order.total_amount,
-        currency: 'BRL',
-      };
-
-      // We send it to webhook endpoint
-      await axios.post(`${apiUrl}/webhooks/payments/simulated`, eventPayload, {
-        headers: {
-          'x-signature': 'simulated-signature-dev-mode',
-        },
-      });
-
-      // Re-fetch immediate status
-      await fetchOrderStatus();
-    } catch (err: any) {
-      // If webhook signature check fails due to secret, try direct status refresh
-      await fetchOrderStatus();
-    } finally {
-      setSimulatingWebhook(false);
-    }
-  };
-
   if (loading && !order) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
@@ -154,12 +119,16 @@ export const PaymentPage: React.FC = () => {
         
         {/* Brand header */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-2xl bg-brand-navy flex items-center justify-center text-white shadow-candy">
-              <Sparkles className="w-5 h-5 text-brand-yellow" />
+          <Link to="/" className="inline-flex items-center gap-3 group">
+            <div className="w-12 h-12 rounded-xl overflow-hidden shadow-candy flex-shrink-0">
+              <img
+                src="/logo.png"
+                alt="Meu Mundo de Recortes"
+                className="w-full h-full object-cover object-center"
+              />
             </div>
-            <span className="font-black text-2xl text-brand-navy">
-              Educa<span className="text-brand-pink">Kids</span>
+            <span className="font-black text-xl text-brand-navy">
+              Meu Mundo de Recortes
             </span>
           </Link>
         </div>
@@ -198,7 +167,7 @@ export const PaymentPage: React.FC = () => {
               <div className="pt-3 border-t border-emerald-200/60 flex items-start gap-2.5 text-xs text-slate-700 font-semibold leading-relaxed">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <span>
-                  O link de download protegido e time-limited foi gerado pelo servidor e enviado para a sua caixa de entrada. Por segurança, o download é feito exclusivamente pelo link enviado.
+                  O arquivo PDF foi enviado diretamente para a sua caixa de entrada. Por segurança, o download só é feito pelo link enviado no e-mail.
                 </span>
               </div>
             </div>
@@ -346,18 +315,6 @@ export const PaymentPage: React.FC = () => {
             <div className="flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl bg-brand-ice-50 border border-brand-ice-200 text-brand-navy text-xs font-bold">
               <RefreshCw className="w-4 h-4 animate-spin text-brand-navy" />
               <span>Verificando pagamento em tempo real... Não feche esta tela.</span>
-            </div>
-
-            {/* Testing / Simulation helper */}
-            <div className="pt-4 border-t border-dashed border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-              <span>Ambiente de demonstração/testes integrado com o gateway:</span>
-              <button
-                onClick={handleSimulatePaymentConfirmation}
-                disabled={simulatingWebhook}
-                className="px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-900 rounded-xl font-bold transition-colors disabled:opacity-50"
-              >
-                {simulatingWebhook ? 'Processando Webhook...' : '⚡ Simular Aprovação de Pagamento'}
-              </button>
             </div>
 
           </div>

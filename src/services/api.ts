@@ -144,6 +144,24 @@ api.interceptors.response.use(
   }
 );
 
+export function getProductImageUrl(imagePath: string | null | undefined): string | undefined {
+  if (!imagePath) return undefined;
+
+  const apiOrigin = new URL(API_BASE_URL).origin;
+  const imageUrl = /^https?:\/\//i.test(imagePath)
+    ? new URL(imagePath)
+    : new URL(imagePath, apiOrigin);
+
+  if (
+    imageUrl.origin === apiOrigin &&
+    imageUrl.pathname.startsWith('/uploads/product-images/')
+  ) {
+    return `/image-proxy${imageUrl.pathname}${imageUrl.search}`;
+  }
+
+  return imageUrl.toString();
+}
+
 export function getErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const apiError = error.response?.data as ApiResponse | undefined;

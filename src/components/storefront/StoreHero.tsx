@@ -1,6 +1,7 @@
 import React from 'react';
 import { Product, ProductVisualMeta } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
+import { getProductImageUrl } from '../../services/api';
 import { ShoppingBag, Sparkles, Download, CheckCircle, ShieldCheck, Heart } from 'lucide-react';
 
 interface StoreHeroProps {
@@ -91,7 +92,7 @@ export const StoreHero: React.FC<StoreHeroProps> = ({ product, meta, onBuyClick 
                 <div className="relative overflow-hidden rounded-2xl bg-white aspect-[4/5] flex items-center justify-center shadow-inner">
                   {product.thumbnail_url ? (
                     <img
-                      src={product.thumbnail_url}
+                      src={getProductImageUrl(product.thumbnail_url)}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />

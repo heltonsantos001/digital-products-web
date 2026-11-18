@@ -45,6 +45,18 @@ export const productService = {
     return response.data.data;
   },
 
+  async uploadImage(id: number, file: File): Promise<Product> {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await api.post<ApiResponse<Product>>(`/products/${id}/image`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data.data;
+  },
   async uploadFile(id: number, file: File): Promise<ProductFile> {
     const formData = new FormData();
     formData.append('file', file);

@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../../contexts/AuthContext';
 import { getErrorMessage } from '../../services/api';
-import { Sparkles, Lock, Mail, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
+import { Lock, Mail, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
 
 const loginFormSchema = z.object({
   email: z.string().email('Informe um e-mail válido'),
@@ -55,8 +55,12 @@ export const AdminLoginPage: React.FC = () => {
         
         {/* Brand header */}
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-brand-navy flex items-center justify-center mx-auto text-white shadow-candy">
-            <Sparkles className="w-7 h-7 text-brand-yellow" />
+          <div className="w-16 h-16 rounded-2xl overflow-hidden mx-auto shadow-candy">
+            <img
+              src="/logo.png"
+              alt="Meu Mundo de Recortes"
+              className="w-full h-full object-cover object-center"
+            />
           </div>
           <h1 className="text-2xl font-black text-brand-navy tracking-tight">
             Painel Administrativo

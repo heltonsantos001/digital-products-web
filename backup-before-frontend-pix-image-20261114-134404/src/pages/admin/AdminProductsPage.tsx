@@ -1,0 +1,868 @@
+import React, { useEffect, useState } from 'react';
+import { productService } from '../../services/product.service';
+import { categoryService } from '../../services/category.service';
+import { Product, ProductCategory, ProductFile } from '../../types';
+import { formatCurrency, formatFileSize, formatDate, getStatusBadge } from '../../utils/formatters';
+import { useAuth } from '../../contexts/AuthContext';
+import { getErrorMessage } from '../../services/api';
+import {
+  Package,
+  Plus,
+  Search,
+  Filter,
+  Edit,
+  Trash2,
+  Upload,
+  FileText,
+  Clock,
+  Sparkles,
+  ExternalLink,
+  Loader2,
+  Check,
+  X,
+  AlertCircle,
+  Eye,
+} from 'lucide-react';
+
+export const AdminProductsPage: React.FC = () => {
+  const { hasPermission } = useAuth();
+  const canCreate = hasPermission('products.create');
+  const canUpdate = hasPermission('products.update');
+  const canDelete = hasPermission('products.delete');
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<number | undefined>(undefined);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Modals state
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [uploadFileProduct, setUploadFileProduct] = useState<Product | null>(null);
+  const [historyProduct, setHistoryProduct] = useState<Product | null>(null);
+  const [productFiles, setProductFiles] = useState<ProductFile[]>([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
+
+  // Form states
+  const [saving, setSaving] = useState(false);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const { products: prods } = await productService.list({
+        search: searchTerm || undefined,
+        category_id: selectedCategory,
+        limit: 50,
+      });
+      setProducts(prods);
+    } catch (err) {
+      setErrorMsg(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const cats = await categoryService.list();
+      setCategories(cats);
+    } catch {
+      // Ignora erro inicial
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, [selectedCategory]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchProducts();
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Deseja realmente desativar ou excluir este produto?')) return;
+    try {
+      await productService.delete(id);
+      fetchProducts();
+    } catch (err) {
+      alert(getErrorMessage(err));
+    }
+  };
+
+  const handleViewFiles = async (prod: Product) => {
+    setHistoryProduct(prod);
+    setLoadingFiles(true);
+    try {
+      const files = await productService.getFiles(prod.id);
+      setProductFiles(files);
+    } catch (err) {
+      alert(getErrorMessage(err));
+    } finally {
+      setLoadingFiles(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      
+      {/* Page Title & Action Bar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black text-brand-navy tracking-tight">
+            Produtos Digitais
+          </h1>
+          <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-1">
+            Cadastre, edite metadados, gerencie versões de arquivos e precificação.
+          </p>
+        </div>
+
+        {canCreate && (
+          <button
+            onClick={() => setCreateModalOpen(true)}
+            className="candy-button bg-brand-yellow hover:bg-brand-yellow-hover text-brand-navy font-black text-xs sm:text-sm px-6 py-3 rounded-full flex items-center gap-2 shadow-candy"
+          >
+            <Plus className="w-4 h-4 stroke-[3]" />
+            <span>NOVO PRODUTO</span>
+          </button>
+        )}
+      </div>
+
+      {errorMsg && (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
+      {/* Filter & Search Bar */}
+      <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-soft flex flex-col md:flex-row items-center justify-between gap-4">
+        <form onSubmit={handleSearchSubmit} className="flex-1 w-full flex items-center gap-2">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar por nome ou descrição..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-pink/50 text-xs font-semibold"
+            />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+          </div>
+          <button
+            type="submit"
+            className="px-4 py-2.5 rounded-2xl bg-brand-navy text-white text-xs font-bold hover:bg-brand-navy-800 transition-colors"
+          >
+            Buscar
+          </button>
+        </form>
+
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <Filter className="w-4 h-4 text-slate-400 shrink-0" />
+          <select
+            value={selectedCategory || ''}
+            onChange={(e) => setSelectedCategory(e.target.value ? Number(e.target.value) : undefined)}
+            className="px-3 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50 text-slate-700 bg-white"
+          >
+            <option value="">Todas as Categorias</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Products Table */}
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-soft overflow-hidden">
+        {loading ? (
+          <div className="py-20 flex flex-col items-center justify-center text-slate-400">
+            <Loader2 className="w-8 h-8 animate-spin text-brand-navy mb-2" />
+            <p className="text-xs font-bold">Carregando catálogo...</p>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="py-20 text-center text-slate-400">
+            <Package className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+            <p className="text-sm font-bold text-slate-600">Nenhum produto encontrado</p>
+            <p className="text-xs mt-1">Tente ajustar seus filtros ou cadastre um novo produto.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-black uppercase tracking-wider text-slate-400">
+                  <th className="py-4 px-6">Produto</th>
+                  <th className="py-4 px-4">Categoria</th>
+                  <th className="py-4 px-4">Preço</th>
+                  <th className="py-4 px-4">Tipo</th>
+                  <th className="py-4 px-4">Arquivo Digital</th>
+                  <th className="py-4 px-4">Status</th>
+                  <th className="py-4 px-6 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs font-semibold">
+                {products.map((p) => {
+                  const badge = getStatusBadge(p.status);
+                  return (
+                    <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                            {p.thumbnail_url ? (
+                              <img
+                                src={p.thumbnail_url}
+                                alt={p.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-slate-400">
+                                SEM FOTO
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <span className="font-extrabold text-brand-navy block leading-snug">
+                              {p.name}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono block">
+                              /{p.slug}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-4 text-slate-600">
+                        {p.category_name || '-'}
+                      </td>
+
+                      <td className="py-4 px-4 font-black text-brand-navy">
+                        {formatCurrency(p.price)}
+                      </td>
+
+                      <td className="py-4 px-4">
+                        <span className="uppercase font-black text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                          {p.product_type}
+                        </span>
+                      </td>
+
+                      <td className="py-4 px-4">
+                        {p.file ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                              v{p.file.version} ({formatFileSize(p.file.file_size)})
+                            </span>
+                            <button
+                              onClick={() => handleViewFiles(p)}
+                              title="Histórico de versões"
+                              className="p-1 hover:bg-slate-200 rounded text-slate-500"
+                            >
+                              <Clock className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                            Pendente de envio
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-4 px-4">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${badge.bg}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
+                          {badge.label}
+                        </span>
+                      </td>
+
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {/* Upload new file version */}
+                          {canUpdate && (
+                            <button
+                              onClick={() => setUploadFileProduct(p)}
+                              title="Enviar novo arquivo digital"
+                              className="p-2 rounded-xl text-slate-500 hover:text-brand-purple hover:bg-purple-50 transition-colors"
+                            >
+                              <Upload className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {/* Edit Product */}
+                          {canUpdate && (
+                            <button
+                              onClick={() => setEditProduct(p)}
+                              title="Editar Produto"
+                              className="p-2 rounded-xl text-slate-500 hover:text-brand-navy hover:bg-slate-100 transition-colors"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {/* Delete Product */}
+                          {canDelete && (
+                            <button
+                              onClick={() => handleDelete(p.id)}
+                              title="Desativar/Excluir"
+                              className="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* CREATE PRODUCT MODAL */}
+      {createModalOpen && (
+        <CreateProductModal
+          categories={categories}
+          onClose={() => setCreateModalOpen(false)}
+          onSuccess={() => {
+            setCreateModalOpen(false);
+            fetchProducts();
+          }}
+        />
+      )}
+
+      {/* EDIT PRODUCT MODAL */}
+      {editProduct && (
+        <EditProductModal
+          product={editProduct}
+          categories={categories}
+          onClose={() => setEditProduct(null)}
+          onSuccess={() => {
+            setEditProduct(null);
+            fetchProducts();
+          }}
+        />
+      )}
+
+      {/* UPLOAD FILE MODAL */}
+      {uploadFileProduct && (
+        <UploadProductFileModal
+          product={uploadFileProduct}
+          onClose={() => setUploadFileProduct(null)}
+          onSuccess={() => {
+            setUploadFileProduct(null);
+            fetchProducts();
+          }}
+        />
+      )}
+
+      {/* VERSION HISTORY MODAL */}
+      {historyProduct && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="font-black text-brand-navy text-lg">Histórico de Arquivos</h3>
+                <p className="text-xs text-slate-500 font-semibold">{historyProduct.name}</p>
+              </div>
+              <button
+                onClick={() => setHistoryProduct(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {loadingFiles ? (
+              <div className="py-8 text-center text-slate-400">
+                <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-brand-navy" />
+                <p className="text-xs font-bold">Buscando versões...</p>
+              </div>
+            ) : productFiles.length === 0 ? (
+              <p className="text-xs text-slate-500 py-6 text-center">Nenhum arquivo versionado para este produto.</p>
+            ) : (
+              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                {productFiles.map((f) => (
+                  <div
+                    key={f.id}
+                    className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-brand-navy">Versão {f.version}</span>
+                        {f.is_current === 1 && (
+                          <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-full">
+                            Atual
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-slate-500 block mt-0.5">
+                        {f.original_name} • {formatFileSize(f.file_size)}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-bold">
+                      {formatDate(f.created_at)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setHistoryProduct(null)}
+                className="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+};
+
+// Create Product Modal Subcomponent
+const CreateProductModal: React.FC<{
+  categories: ProductCategory[];
+  onClose: () => void;
+  onSuccess: () => void;
+}> = ({ categories, onClose, onSuccess }) => {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('29.90');
+  const [categoryId, setCategoryId] = useState<number>(categories[0]?.id || 1);
+  const [productType, setProductType] = useState('pdf');
+  const [status, setStatus] = useState<'active' | 'inactive'>('active');
+  const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('name', name.trim());
+      formData.append('description', description.trim());
+      formData.append('price', String(price));
+      formData.append('category_id', String(categoryId));
+      formData.append('product_type', productType);
+      formData.append('status', status);
+      if (thumbnailUrl) formData.append('thumbnail_url', thumbnailUrl.trim());
+      if (file) formData.append('file', file);
+
+      await productService.create(formData);
+      onSuccess();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 className="font-black text-brand-navy text-lg">Novo Produto Digital</h3>
+          <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-slate-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {error && (
+          <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs font-bold text-slate-700">
+          <div>
+            <label className="block mb-1">Nome do Produto *</label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Alfabetização Divertida Kit 1"
+              className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block mb-1">Preço (R$) *</label>
+              <input
+                type="number"
+                step="0.01"
+                required
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1">Categoria *</label>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(Number(e.target.value))}
+                className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50 bg-white"
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block mb-1">Tipo de Produto *</label>
+              <select
+                value={productType}
+                onChange={(e) => setProductType(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50 bg-white"
+              >
+                <option value="pdf">PDF</option>
+                <option value="ebook">E-Book</option>
+                <option value="archive">Arquivo Compactado (ZIP)</option>
+                <option value="software">Software / App</option>
+                <option value="other">Outro</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block mb-1">Status</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as any)}
+                className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50 bg-white"
+              >
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block mb-1">URL da Imagem de Apresentação</label>
+            <input
+              type="url"
+              value={thumbnailUrl}
+              onChange={(e) => setThumbnailUrl(e.target.value)}
+              placeholder="https://exemplo.com/capa.jpg"
+              className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1">Descrição do Produto *</label>
+            <textarea
+              required
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Descreva o conteúdo do material ou insira JSON de metadados..."
+              className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1">Arquivo Digital Privado (Upload inicial)</label>
+            <input
+              type="file"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="w-full px-3 py-2 rounded-2xl border border-dashed border-slate-300 text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-navy file:text-white"
+            />
+            <span className="text-[10px] text-slate-400 block mt-1">
+              O arquivo será armazenado com criptografia e isolado da web root.
+            </span>
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="candy-button px-6 py-2.5 rounded-xl bg-brand-yellow text-brand-navy font-black disabled:opacity-50"
+            >
+              {loading ? 'Cadastrando...' : 'Salvar Produto'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Edit Product Modal Subcomponent
+const EditProductModal: React.FC<{
+  product: Product;
+  categories: ProductCategory[];
+  onClose: () => void;
+  onSuccess: () => void;
+}> = ({ product, categories, onClose, onSuccess }) => {
+  const [name, setName] = useState(product.name);
+  const [description, setDescription] = useState(product.description);
+  const [price, setPrice] = useState(String(product.price));
+  const [categoryId, setCategoryId] = useState<number>(product.category_id);
+  const [productType, setProductType] = useState(product.product_type);
+  const [status, setStatus] = useState(product.status);
+  const [thumbnailUrl, setThumbnailUrl] = useState(product.thumbnail_url || '');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      await productService.update(product.id, {
+        name: name.trim(),
+        description: description.trim(),
+        price: Number(price),
+        category_id: categoryId,
+        product_type: productType as any,
+        status: status as any,
+        thumbnail_url: thumbnailUrl.trim() || undefined,
+      });
+      onSuccess();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 className="font-black text-brand-navy text-lg">Editar Produto #{product.id}</h3>
+          <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-slate-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {error && (
+          <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs font-bold text-slate-700">
+          <div>
+            <label className="block mb-1">Nome do Produto</label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block mb-1">Preço (R$)</label>
+              <input
+                type="number"
+                step="0.01"
+                required
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1">Categoria</label>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(Number(e.target.value))}
+                className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50 bg-white"
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block mb-1">Tipo de Produto</label>
+              <select
+                value={productType}
+                onChange={(e) => setProductType(e.target.value as any)}
+                className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50 bg-white"
+              >
+                <option value="pdf">PDF</option>
+                <option value="ebook">E-Book</option>
+                <option value="archive">Arquivo Compactado (ZIP)</option>
+                <option value="software">Software / App</option>
+                <option value="other">Outro</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block mb-1">Status</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as any)}
+                className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50 bg-white"
+              >
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+                <option value="archived">Arquivado</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block mb-1">URL da Imagem de Apresentação</label>
+            <input
+              type="url"
+              value={thumbnailUrl}
+              onChange={(e) => setThumbnailUrl(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1">Descrição do Produto</label>
+            <textarea
+              required
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50"
+            />
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="candy-button px-6 py-2.5 rounded-xl bg-brand-yellow text-brand-navy font-black disabled:opacity-50"
+            >
+              {loading ? 'Salvando...' : 'Salvar Alterações'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Upload Product File Modal Subcomponent
+const UploadProductFileModal: React.FC<{
+  product: Product;
+  onClose: () => void;
+  onSuccess: () => void;
+}> = ({ product, onClose, onSuccess }) => {
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) {
+      setError('Selecione um arquivo para enviar');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+
+    try {
+      await productService.uploadFile(product.id, file);
+      onSuccess();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-4 shadow-2xl">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div>
+            <h3 className="font-black text-brand-navy text-lg">Atualizar Arquivo Digital</h3>
+            <p className="text-xs text-slate-500 font-semibold">{product.name}</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-slate-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {error && (
+          <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-xs text-slate-600 font-medium">
+            O novo arquivo será registrado como uma <strong>nova versão</strong> do produto. Compradores futuros receberão esta nova versão.
+          </div>
+
+          <div>
+            <input
+              type="file"
+              required
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="w-full px-3 py-3 rounded-2xl border border-dashed border-slate-300 text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-navy file:text-white"
+            />
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 text-xs"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !file}
+              className="candy-button px-6 py-2.5 rounded-xl bg-brand-yellow text-brand-navy font-black text-xs disabled:opacity-50"
+            >
+              {loading ? 'Enviando...' : 'Fazer Upload de Nova Versão'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};

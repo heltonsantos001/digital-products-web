@@ -5,7 +5,13 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Nunito', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 }
 
@@ -31,32 +37,50 @@
   backdrop-filter: blur(8px);
 }
 
-.candy-button {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 0 #d97706;
+.bg-dot-pattern {
+  background-image: radial-gradient(#dcd5e7 1.2px, transparent 1.2px);
+  background-size: 16px 16px;
 }
 
-.candy-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 #d97706;
+/* Yellow marker highlighter for headlines */
+.highlight-yellow {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+.highlight-yellow::after {
+  content: "";
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  bottom: 4px;
+  height: 42%;
+  background-color: #fdd853;
+  z-index: -1;
+  border-radius: 4px;
 }
 
-.candy-button:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 #d97706;
+/* Identidade visual Meu Mundo de Recortes — storefront */
+.storefront-theme {
+  color: #1e1b2e;
+  background: #ffffff;
+  font-family: 'Plus Jakarta Sans', 'Nunito', system-ui, -apple-system, sans-serif;
 }
-
-.candy-button-pink {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 0 #be123c;
+.storefront-theme button,
+.storefront-theme a,
+.storefront-theme input {
+  -webkit-tap-highlight-color: transparent;
 }
-
-.candy-button-pink:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 #be123c;
+.storefront-theme ::selection {
+  background: #fde89c;
+  color: #1e1b2e;
 }
-
-.candy-button-pink:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 #be123c;
+.storefront-theme img {
+  display: block;
+}
+.storefront-theme button:focus-visible,
+.storefront-theme a:focus-visible,
+.storefront-theme input:focus-visible {
+  outline: 3px solid rgba(135, 101, 182, 0.35);
+  outline-offset: 3px;
 }

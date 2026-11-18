@@ -22,7 +22,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onToggleSidebar }) => 
 
         <div className="hidden sm:block">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-            Plataforma Digital Pay
+            Meu Mundo de Recortes
           </span>
           <span className="text-sm font-black text-brand-navy">
             Controle de Operações & Vendas

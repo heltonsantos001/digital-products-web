@@ -122,13 +122,13 @@ export interface CheckoutInput {
   customer: {
     name: string;
     email: string;
+    cpfCnpj: string;
   };
   items: Array<{
     product_id: number;
     quantity: number;
   }>;
-  payment_method: 'simulated' | 'pix' | 'credit_card' | 'bank_slip';
-  gateway?: string;
+  payment_method: 'pix';
 }
 
 export interface OrderItem {

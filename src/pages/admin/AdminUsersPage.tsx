@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { adminService } from '../../services/admin.service';
+import { api, getErrorMessage } from '../../services/api';
 import { AdminUser, Role, Permission } from '../../types';
 import { formatDate, getStatusBadge } from '../../utils/formatters';
 import { useAuth } from '../../contexts/AuthContext';
-import { getErrorMessage } from '../../services/api';
 import {
   ShieldCheck,
   Plus,
@@ -48,14 +48,35 @@ export const AdminUsersPage: React.FC = () => {
     setLoading(true);
     setErrorMsg(null);
     try {
-      const [adminsRes, rolesRes, permsRes] = await Promise.all([
-        adminService.listAdmins(1, 50),
-        adminService.listRoles(),
-        adminService.listPermissions(),
+      // Usar validateStatus para evitar que erros 4xx/5xx disparem o interceptor global de 401
+      // e causem logout acidental ao abrir o modal de administradores
+      const safeGet = async <T,>(url: string, params?: Record<string, unknown>): Promise<T | null> => {
+        try {
+          // api já importado estaticamente no topo
+          const res = await api.get<{ success: boolean; data: T }>(url, {
+            params,
+            validateStatus: (status) => status < 500,
+          });
+          if (res.status === 401 || res.status === 403) {
+            console.warn(`Permissão insuficiente para ${url} (${res.status})`);
+            return null;
+          }
+          return res.data?.data ?? null;
+        } catch (err) {
+          console.warn(`Falha ao carregar ${url}:`, err);
+          return null;
+        }
+      };
+
+      const [adminsData, rolesData, permsData] = await Promise.all([
+        safeGet<AdminUser[]>('/admin/administrators', { page: 1, limit: 50 }),
+        safeGet<Role[]>('/admin/roles'),
+        safeGet<Permission[]>('/admin/permissions'),
       ]);
-      setAdmins(adminsRes.admins);
-      setRoles(rolesRes);
-      setPermissions(permsRes);
+
+      setAdmins(Array.isArray(adminsData) ? adminsData : []);
+      setRoles(Array.isArray(rolesData) ? rolesData : []);
+      setPermissions(Array.isArray(permsData) ? permsData : []);
     } catch (err) {
       setErrorMsg(getErrorMessage(err));
     } finally {
@@ -84,12 +105,20 @@ export const AdminUsersPage: React.FC = () => {
     setName(adm.name);
     setEmail(adm.email);
     setPassword('');
-    setIsSuperAdmin(adm.is_super_admin);
+    setIsSuperAdmin(Boolean(adm.is_super_admin));
     setStatus(adm.status || 'active');
 
-    // Find role IDs matching admin roles names
-    const matchedRoleIds = roles
-      .filter(r => adm.roles?.includes(r.name))
+    // Find role IDs matching admin roles names or objects
+    const matchedRoleIds = (roles || [])
+      .filter(r => {
+        return (adm.roles as any[])?.some(ar => {
+          if (typeof ar === 'string') return ar.toLowerCase() === r.name.toLowerCase();
+          if (typeof ar === 'object' && ar !== null) {
+            return ar.id === r.id || ar.name?.toLowerCase() === r.name.toLowerCase();
+          }
+          return false;
+        });
+      })
       .map(r => r.id);
     setSelectedRoleIds(matchedRoleIds);
     setSelectedPermIds([]);
@@ -240,11 +269,17 @@ export const AdminUsersPage: React.FC = () => {
                       <td className="py-4 px-4">
                         <div className="flex flex-wrap gap-1">
                           {adm.roles && adm.roles.length > 0 ? (
-                            adm.roles.map((r, idx) => (
-                              <span key={idx} className="bg-brand-ice-100 text-brand-navy-900 px-2 py-0.5 rounded text-[10px] font-bold">
-                                {r}
-                              </span>
-                            ))
+                            adm.roles.map((r: any, idx: number) => {
+                              const roleLabel =
+                                typeof r === 'object' && r !== null
+                                  ? r.display_name || r.name
+                                  : String(r);
+                              return (
+                                <span key={idx} className="bg-brand-ice-100 text-brand-navy-900 px-2 py-0.5 rounded text-[10px] font-bold">
+                                  {roleLabel}
+                                </span>
+                              );
+                            })
                           ) : (
                             <span className="text-slate-400 text-[11px]">-</span>
                           )}

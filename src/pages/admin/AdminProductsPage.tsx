@@ -4,7 +4,7 @@ import { categoryService } from '../../services/category.service';
 import { Product, ProductCategory, ProductFile } from '../../types';
 import { formatCurrency, formatFileSize, formatDate, getStatusBadge } from '../../utils/formatters';
 import { useAuth } from '../../contexts/AuthContext';
-import { getErrorMessage } from '../../services/api';
+import { getErrorMessage, getProductImageUrl } from '../../services/api';
 import {
   Package,
   Plus,
@@ -214,7 +214,7 @@ export const AdminProductsPage: React.FC = () => {
                           <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
                             {p.thumbnail_url ? (
                               <img
-                                src={p.thumbnail_url}
+                                src={getProductImageUrl(p.thumbnail_url)}
                                 alt={p.name}
                                 className="w-full h-full object-cover"
                               />
@@ -439,7 +439,7 @@ const CreateProductModal: React.FC<{
   const [categoryId, setCategoryId] = useState<number>(categories[0]?.id || 1);
   const [productType, setProductType] = useState('pdf');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
-  const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -457,10 +457,15 @@ const CreateProductModal: React.FC<{
       formData.append('category_id', String(categoryId));
       formData.append('product_type', productType);
       formData.append('status', status);
-      if (thumbnailUrl) formData.append('thumbnail_url', thumbnailUrl.trim());
+
       if (file) formData.append('file', file);
 
-      await productService.create(formData);
+      const createdProduct = await productService.create(formData);
+
+      if (imageFile) {
+        await productService.uploadImage(createdProduct.id, imageFile);
+      }
+
       onSuccess();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -557,14 +562,16 @@ const CreateProductModal: React.FC<{
           </div>
 
           <div>
-            <label className="block mb-1">URL da Imagem de Apresentação</label>
+            <label className="block mb-1">Imagem de Apresentação (JPG, PNG ou WEBP)</label>
             <input
-              type="url"
-              value={thumbnailUrl}
-              onChange={(e) => setThumbnailUrl(e.target.value)}
-              placeholder="https://exemplo.com/capa.jpg"
-              className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+              className="w-full px-3.5 py-2.5 rounded-2xl border border-dashed border-slate-300 text-xs"
             />
+            {imageFile && (
+              <p className="mt-1 text-[10px] text-slate-500">{imageFile.name}</p>
+            )}
           </div>
 
           <div>
@@ -626,7 +633,7 @@ const EditProductModal: React.FC<{
   const [categoryId, setCategoryId] = useState<number>(product.category_id);
   const [productType, setProductType] = useState(product.product_type);
   const [status, setStatus] = useState(product.status);
-  const [thumbnailUrl, setThumbnailUrl] = useState(product.thumbnail_url || '');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -643,8 +650,12 @@ const EditProductModal: React.FC<{
         category_id: categoryId,
         product_type: productType as any,
         status: status as any,
-        thumbnail_url: thumbnailUrl.trim() || undefined,
       });
+
+      if (imageFile) {
+        await productService.uploadImage(product.id, imageFile);
+      }
+
       onSuccess();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -741,13 +752,21 @@ const EditProductModal: React.FC<{
           </div>
 
           <div>
-            <label className="block mb-1">URL da Imagem de Apresentação</label>
+            <label className="block mb-1">Imagem de Apresentação (JPG, PNG ou WEBP)</label>
             <input
-              type="url"
-              value={thumbnailUrl}
-              onChange={(e) => setThumbnailUrl(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-pink/50"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+              className="w-full px-3.5 py-2.5 rounded-2xl border border-dashed border-slate-300 text-xs"
             />
+            {imageFile && (
+              <p className="mt-1 text-[10px] text-slate-500">{imageFile.name}</p>
+            )}
+            {product.thumbnail_url && (
+              <p className="mt-1 text-[10px] text-slate-500">
+                Já existe uma imagem cadastrada. Selecione outra somente se quiser substituí-la.
+              </p>
+            )}
           </div>
 
           <div>
@@ -779,8 +798,7 @@ const EditProductModal: React.FC<{
           </div>
         </form>
       </div>
-    </div>
-  );
+    </div>  );
 };
 
 // Upload Product File Modal Subcomponent
